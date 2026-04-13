@@ -15,14 +15,18 @@ public class Book {
     private String isbn;
     private Integer publishedYear;
 
+    // Version 2 attribute
+    private boolean isAvailable;
+
     public Book() {
     }
 
-    public Book(String title, String author, String isbn, Integer publishedYear) {
+    public Book(String title, String author, String isbn, Integer publishedYear, boolean isAvailable) {
         this.title = title;
         this.author = author;
         this.isbn = isbn;
         this.publishedYear = publishedYear;
+        this.isAvailable = isAvailable;
     }
 
     public Long getId() {
@@ -63,5 +67,13 @@ public class Book {
 
     public void setPublishedYear(Integer publishedYear) {
         this.publishedYear = publishedYear;
+    }
+
+    public boolean isAvailable() {
+        return isAvailable;
+    }
+
+    public void setAvailable(boolean isAvailable) {
+        this.isAvailable = isAvailable;
     }
 }

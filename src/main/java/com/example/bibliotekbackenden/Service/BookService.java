@@ -17,7 +17,7 @@ public class BookService {
 
     /**
      * @return
-     *         this is four functions of service CRUD which will be used in
+     *         four functions of service CRUD which will be used in
      *         controller and repository
      */
     public Book createBook(String title, String author, String isbn, Integer publishedYear) {
@@ -30,18 +30,35 @@ public class BookService {
         return bookRepository.save(book);
     }
 
+    //Method with updated attributes
+    public Book createBookV2(String title, String author, String isbn, Integer publishedYear, boolean isAvailable) {
+        Book book = new Book();
+        book.setTitle(title);
+        book.setAuthor(author);
+        book.setIsbn(isbn);
+        book.setPublishedYear(publishedYear);
+        book.setAvailable(isAvailable);
+
+        return bookRepository.save(book);
+    }
+
     public Book getBookById(Long id) {
         return bookRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Book not found"));
     }
 
-    public Book updateBook(Long id, String title, String author, String isbn, Integer publishedYear) {
+    public Iterable<Book> getAllBooks() {
+        return bookRepository.findAll();
+    }
+
+    public Book updateBook(Long id, String title, String author, String isbn, Integer publishedYear, boolean isAvailable) {
         try {
             Book book = getBookById(id);
             book.setTitle(title);
             book.setAuthor(author);
             book.setIsbn(isbn);
             book.setPublishedYear(publishedYear);
+            book.setAvailable(isAvailable);
 
             return bookRepository.save(book);
         } catch (Exception e) {
