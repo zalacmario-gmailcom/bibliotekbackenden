@@ -4,12 +4,16 @@ import java.sql.Date;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.example.bibliotekbackenden.Entity.Book;
 import com.example.bibliotekbackenden.Entity.Loan;
 import com.example.bibliotekbackenden.Repository.BookRepository;
 import com.example.bibliotekbackenden.Repository.LoanRepository;
+
+import jakarta.persistence.OptimisticLockException;
+import jakarta.transaction.Transactional;
 
 @Service
 public class LoanService {
@@ -24,7 +28,13 @@ public class LoanService {
     /**
      * CRUD methods without updated.
      */
+    @Transactional
     public Loan createLoan(Long bookId, Date loanDate, Date returnDate) {
+        // Check if book already has an active loan (query within transaction)
+        if (loanRepository.findById(bookId).isPresent()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Book is already loaned");
+        }
+
         Book book = bookRepository.findById(bookId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
                         "Book not found or not available with id: " + bookId));
@@ -35,7 +45,12 @@ public class LoanService {
         loan.setLoanDate(loanDate != null ? loanDate : new Date(System.currentTimeMillis()));
         loan.setReturnDate(returnDate);
 
-        return loanRepository.save(loan);
+        // Attempt to create loan - if another thread modified Book, exception thrown
+        try {
+            return loanRepository.save(loan);
+        } catch (OptimisticLockException e) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Book was modified by another request");
+        }
     }
 
     public Loan getLoanById(Long id) {
