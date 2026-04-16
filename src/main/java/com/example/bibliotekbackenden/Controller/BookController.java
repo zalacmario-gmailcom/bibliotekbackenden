@@ -1,11 +1,8 @@
 package com.example.bibliotekbackenden.Controller;
 
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.example.bibliotekbackenden.Dto.Book.v1.BookCreateDTO;
 import com.example.bibliotekbackenden.Dto.Book.v1.BookResponseDTO;
@@ -27,58 +24,82 @@ public class BookController {
      * CRUD operations for Book entity.
      */
     @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
     public BookResponseDTO createBook(@RequestBody BookCreateDTO dto) {
         Book book = bookService.createBook(dto.title(), dto.authorId(), dto.isbn(), dto.publishedYear());
 
         return new BookResponseDTO(
                 book.getId(),
                 book.getTitle(),
-                book.getAuthor(),
+                book.getAuthor() != null ? book.getAuthor() : "Unknown Author",
                 book.getIsbn(),
                 book.getPublishedYear());
     }
 
     // Updated method to create book with new attribute "isAvailable"
     @PostMapping("/v2")
+    @ResponseStatus(HttpStatus.CREATED)
     public BookResponseDTOv2 createBookV2(@RequestBody BookCreateDTOv2 dto) {
-        Book book2 = bookService.createBookV2(dto.title(), dto.authorId(), dto.isbn(), dto.publishedYear(),
-                dto.isAvailable());
+        try {
+            Book book2 = bookService.createBookV2(dto.title(), dto.authorId(), dto.isbn(), dto.publishedYear(),
+                    dto.isAvailable());
 
-        return new BookResponseDTOv2(
-                book2.getId(),
-                book2.getTitle(),
-                book2.getAuthor(),
-                book2.getIsbn(),
-                book2.getPublishedYear(),
-                book2.isAvailable(),
-                "v2");
+            return new BookResponseDTOv2(
+                    book2.getId(),
+                    book2.getTitle(),
+                    book2.getAuthor() != null ? book2.getAuthor() : "Unknown Author",
+                    book2.getIsbn(),
+                    book2.getPublishedYear(),
+                    book2.isAvailable(),
+                    "v2");
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Author not found");
+        }
     }
 
     @GetMapping("/{id}")
-    public BookResponseDTO getBookById(Long id) {
-        Book book = bookService.getBookById(id);
+    public BookResponseDTO getBookById(@PathVariable("id") Long id) {
+        try {
+            Book book = bookService.getBookById(id);
 
-        return new BookResponseDTO(
-                book.getId(),
-                book.getTitle(),
-                book.getAuthor(),
-                book.getIsbn(),
-                book.getPublishedYear());
+            return new BookResponseDTO(
+                    book.getId(),
+                    book.getTitle(),
+                    book.getAuthor() != null ? book.getAuthor() : "Unknown Author",
+                    book.getIsbn(),
+                    book.getPublishedYear());
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Book not found");
+        }
     }
 
     @GetMapping
     public Iterable<Book> getAllBooks() {
-        return bookService.getAllBooks();
+        try {
+            return bookService.getAllBooks();
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Books not found");
+        }
     }
 
-    @PostMapping("/{id}")
-    public Book updateBook(Long id, @RequestBody BookResponseDTOv2 dto) {
-        return bookService.updateBook(id, dto.title(), dto.author(), dto.isbn(), dto.publishedYear(),
-                dto.isAvailable());
+    @PutMapping("/{id}")
+    public Book updateBook(@PathVariable("id") Long id, @RequestBody BookResponseDTOv2 dto) {
+        try {
+            return bookService.updateBook(id, dto.title(), dto.author() != null ? dto.author() : "Unknown Author",
+                    dto.isbn(), dto.publishedYear(),
+                    dto.isAvailable());
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Book not found");
+        }
+
     }
 
     @DeleteMapping("/{id}")
-    public Book deleteBook(Long id) {
-        return bookService.deleteBook(id);
+    public Book deleteBook(@PathVariable("id") Long id) {
+        try {
+            return bookService.deleteBook(id);
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Book not found");
+        }
     }
 }

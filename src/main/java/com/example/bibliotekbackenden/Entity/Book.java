@@ -84,10 +84,6 @@ public class Book {
         this.isAvailable = isAvailable;
     }
 
-    public Author getAuthorBook() {
-        return authorBook;
-    }
-
     public void setAuthorBook(Author authorBook) {
         this.authorBook = authorBook;
     }
