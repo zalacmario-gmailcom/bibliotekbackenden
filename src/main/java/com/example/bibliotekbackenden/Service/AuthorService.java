@@ -1,0 +1,70 @@
+package com.example.bibliotekbackenden.Service;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+
+import com.example.bibliotekbackenden.Entity.Author;
+import com.example.bibliotekbackenden.Repository.AuthorRepository;
+
+@Service
+public class AuthorService {
+    private final AuthorRepository authorRepository;
+
+    public AuthorService(AuthorRepository authorRepository) {
+        this.authorRepository = authorRepository;
+    }
+
+    /**
+     * CRUD methods which will be used in the controller and repository
+     */
+    public Author createAuthor(String name) {
+        try {
+            Author author = new Author();
+            author.setName(name);
+
+            return authorRepository.save(author);
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Failed creating author");
+        }
+    }
+
+    public Author getAuthorById(Long id) {
+        return authorRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Author not found"));
+    }
+
+    // Get author with their books (relationship handles loading via @OneToMany)
+    public Author getBooksForAuthor(Long id) {
+        // TODO - optimize so that gives feedback if author doesnt have any books
+        if (!authorRepository.existsById(id)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Author not found");
+        } else {
+            return authorRepository.findById(id)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Author not found"));
+        }
+    }
+
+    public Iterable<Author> getAllAuthors() {
+        return authorRepository.findAll();
+    }
+
+    public Author updateAuthor(Long id, String name) {
+        try {
+            Author author = getAuthorById(id);
+            author.setName(name);
+            return authorRepository.save(author);
+        } catch (ResponseStatusException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Author not found");
+        }
+    }
+
+    public void deleteAuthor(Long id) {
+        try {
+            Author author = getAuthorById(id);
+            authorRepository.delete(author);
+        } catch (ResponseStatusException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Author not found");
+        }
+    }
+}

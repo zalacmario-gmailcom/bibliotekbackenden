@@ -4,40 +4,52 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
 
+import com.example.bibliotekbackenden.Entity.Author;
 import com.example.bibliotekbackenden.Entity.Book;
+import com.example.bibliotekbackenden.Repository.AuthorRepository;
 import com.example.bibliotekbackenden.Repository.BookRepository;
 
 @Service
 public class BookService {
     private final BookRepository bookRepository;
+    private final AuthorRepository authorRepository;
 
-    public BookService(BookRepository bookRepository) {
+    public BookService(BookRepository bookRepository, AuthorRepository authorRepository) {
         this.bookRepository = bookRepository;
+        this.authorRepository = authorRepository;
     }
 
     /**
-     * @return
-     *         four functions of service CRUD which will be used in
-     *         controller and repository
+     * CRUD methods which will be used in the controller and repository
      */
-    public Book createBook(String title, String author, String isbn, Integer publishedYear) {
+    public Book createBook(String title, Long authorId, String isbn, Integer publishedYear) {
+        Author author = authorRepository.findById(authorId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Failed creating, could not find author with id: " + authorId));
         Book book = new Book();
+
         book.setTitle(title);
-        book.setAuthor(author);
+        book.setAuthor(author.getName());
         book.setIsbn(isbn);
         book.setPublishedYear(publishedYear);
+        book.setAuthorBook(author);
 
         return bookRepository.save(book);
     }
 
-    //Method with updated attributes
-    public Book createBookV2(String title, String author, String isbn, Integer publishedYear, boolean isAvailable) {
+    // Method with updated attributes
+    public Book createBookV2(String title, Long authorId, String isbn, Integer publishedYear, boolean isAvailable) {
+        Author author = authorRepository.findById(authorId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Failed creating, could not find author with id: " + authorId));
+
         Book book = new Book();
         book.setTitle(title);
-        book.setAuthor(author);
+        book.setAuthor(author.getName());
         book.setIsbn(isbn);
         book.setPublishedYear(publishedYear);
         book.setAvailable(isAvailable);
+        book.setAuthorBook(author);
 
         return bookRepository.save(book);
     }
@@ -48,10 +60,15 @@ public class BookService {
     }
 
     public Iterable<Book> getAllBooks() {
-        return bookRepository.findAll();
+        try {
+            return bookRepository.findAll();
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No books found");
+        }
     }
 
-    public Book updateBook(Long id, String title, String author, String isbn, Integer publishedYear, boolean isAvailable) {
+    public Book updateBook(Long id, String title, String author, String isbn, Integer publishedYear,
+            boolean isAvailable) {
         try {
             Book book = getBookById(id);
             book.setTitle(title);

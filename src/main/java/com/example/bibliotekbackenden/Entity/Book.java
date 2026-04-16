@@ -1,9 +1,11 @@
 package com.example.bibliotekbackenden.Entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
 
 @Entity
 public class Book {
@@ -17,6 +19,11 @@ public class Book {
 
     // Version 2 attribute
     private boolean isAvailable;
+
+    // Relations
+    @ManyToOne
+    @JsonBackReference
+    private Author authorBook;
 
     public Book() {
     }
@@ -75,5 +82,13 @@ public class Book {
 
     public void setAvailable(boolean isAvailable) {
         this.isAvailable = isAvailable;
+    }
+
+    public Author getAuthorBook() {
+        return authorBook;
+    }
+
+    public void setAuthorBook(Author authorBook) {
+        this.authorBook = authorBook;
     }
 }
