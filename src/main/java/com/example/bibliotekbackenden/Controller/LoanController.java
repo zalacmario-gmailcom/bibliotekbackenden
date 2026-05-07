@@ -2,12 +2,11 @@ package com.example.bibliotekbackenden.Controller;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
-
 import com.example.bibliotekbackenden.Dto.Loan.v1.LoanCreateDTO;
 import com.example.bibliotekbackenden.Dto.Loan.v1.LoanResponseDTO;
 import com.example.bibliotekbackenden.Entity.Loan;
 import com.example.bibliotekbackenden.Service.LoanService;
+import io.swagger.v3.oas.annotations.Operation;
 
 @RestController
 @RequestMapping("/loans")
@@ -22,6 +21,7 @@ public class LoanController {
      * CRUD operations for Loan entity.
      */
     @PostMapping
+    @Operation(summary = "Create loan")
     @ResponseStatus(HttpStatus.CREATED)
     public LoanResponseDTO createLoan(@RequestBody LoanCreateDTO dto) {
         Loan loan = loanService.createLoan(dto.bookId(), dto.loanDate(), dto.returnDate());
@@ -35,8 +35,8 @@ public class LoanController {
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "Get loan by id")
     public LoanResponseDTO getLoanById(@PathVariable("id") Long id) {
-        try {
             Loan loan = loanService.getLoanById(id);
             return new LoanResponseDTO(
                     loan.getId(),
@@ -44,17 +44,11 @@ public class LoanController {
                     loan.getBookTitle(),
                     loan.getLoanDate(),
                     loan.getReturnDate());
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Loan not found");
-        }
     }
 
     @DeleteMapping("/{id}")
+    @Operation(summary = "Delete loan by id")
     public void deleteLoan(@PathVariable("id") Long id) {
-        try {
             loanService.deleteLoan(id);
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Loan not found");
-        }
     }
 }

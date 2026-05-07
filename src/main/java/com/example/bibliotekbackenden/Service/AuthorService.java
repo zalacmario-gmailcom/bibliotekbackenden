@@ -3,8 +3,8 @@ package com.example.bibliotekbackenden.Service;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
-
 import com.example.bibliotekbackenden.Entity.Author;
+import com.example.bibliotekbackenden.Exception.AuthorNotFoundException;
 import com.example.bibliotekbackenden.Repository.AuthorRepository;
 
 @Service
@@ -31,18 +31,14 @@ public class AuthorService {
 
     public Author getAuthorById(Long id) {
         return authorRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Author not found"));
+                .orElseThrow(() -> new AuthorNotFoundException(id));
     }
 
     // Get author with their books (relationship handles loading via @OneToMany)
     public Author getBooksForAuthor(Long id) {
         // TODO - optimize so that gives feedback if author doesnt have any books
-        if (!authorRepository.existsById(id)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Author not found");
-        } else {
-            return authorRepository.findById(id)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Author not found"));
-        }
+        return authorRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Author not found"));
     }
 
     public Iterable<Author> getAllAuthors() {
@@ -55,7 +51,7 @@ public class AuthorService {
             author.setName(name);
             return authorRepository.save(author);
         } catch (ResponseStatusException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Author not found");
+            throw new AuthorNotFoundException(id);
         }
     }
 
@@ -64,7 +60,7 @@ public class AuthorService {
             Author author = getAuthorById(id);
             authorRepository.delete(author);
         } catch (ResponseStatusException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Author not found");
+            throw new AuthorNotFoundException(id);
         }
     }
 }

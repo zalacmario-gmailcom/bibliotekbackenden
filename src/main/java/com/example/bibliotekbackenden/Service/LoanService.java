@@ -1,17 +1,14 @@
 package com.example.bibliotekbackenden.Service;
 
 import java.sql.Date;
-
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Isolation;
-import org.springframework.web.server.ResponseStatusException;
-
 import com.example.bibliotekbackenden.Entity.Book;
 import com.example.bibliotekbackenden.Entity.Loan;
+import com.example.bibliotekbackenden.Exception.AuthorNotFoundException;
+import com.example.bibliotekbackenden.Exception.BookNotAvailableException;
+import com.example.bibliotekbackenden.Exception.LoanNotFoundException;
 import com.example.bibliotekbackenden.Repository.BookRepository;
 import com.example.bibliotekbackenden.Repository.LoanRepository;
-
 import jakarta.persistence.OptimisticLockException;
 import jakarta.transaction.Transactional;
 
@@ -32,12 +29,11 @@ public class LoanService {
     public Loan createLoan(Long bookId, Date loanDate, Date returnDate) {
         // Check if book already has an active loan (query within transaction)
         if (loanRepository.findById(bookId).isPresent()) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Book is already loaned");
+            throw new BookNotAvailableException(bookId);
         }
 
         Book book = bookRepository.findById(bookId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                        "Book not found or not available with id: " + bookId));
+                .orElseThrow(() -> new AuthorNotFoundException(bookId));
 
         Loan loan = new Loan();
         loan.setBook(book);
@@ -49,20 +45,15 @@ public class LoanService {
         try {
             return loanRepository.save(loan);
         } catch (OptimisticLockException e) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Book was modified by another request");
+            throw new BookNotAvailableException(bookId);
         }
     }
 
     public Loan getLoanById(Long id) {
-        return loanRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Loan not found with id: " + id));
-    }
-
-    public Iterable<Loan> getAllLoans() {
         try {
-            return loanRepository.findAll();
+            return loanRepository.findById(id).get();
         } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No loans found");
+            throw new LoanNotFoundException(id);
         }
     }
 
@@ -72,7 +63,7 @@ public class LoanService {
             Loan loan = getLoanById(id);
             loanRepository.delete(loan);
         } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Loan not found");
+            throw new LoanNotFoundException(id);
         }
     }
 }

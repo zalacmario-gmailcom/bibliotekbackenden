@@ -3,9 +3,9 @@ package com.example.bibliotekbackenden.Service;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
-
 import com.example.bibliotekbackenden.Entity.Author;
 import com.example.bibliotekbackenden.Entity.Book;
+import com.example.bibliotekbackenden.Exception.BookNotFoundException;
 import com.example.bibliotekbackenden.Repository.AuthorRepository;
 import com.example.bibliotekbackenden.Repository.BookRepository;
 
@@ -56,14 +56,14 @@ public class BookService {
 
     public Book getBookById(Long id) {
         return bookRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Book not found"));
+                .orElseThrow(() -> new BookNotFoundException(id));
     }
 
     public Iterable<Book> getAllBooks() {
-        try {
-            return bookRepository.findAll();
-        } catch (Exception e) {
+        if (bookRepository.findAll().isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No books found");
+        } else {
+            return bookRepository.findAll();
         }
     }
 
@@ -79,7 +79,7 @@ public class BookService {
 
             return bookRepository.save(book);
         } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Book not found");
+            throw new BookNotFoundException(id);
         }
     }
 
@@ -91,7 +91,7 @@ public class BookService {
 
             return book;
         } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Book not found");
+            throw new BookNotFoundException(id);
         }
     }
 }

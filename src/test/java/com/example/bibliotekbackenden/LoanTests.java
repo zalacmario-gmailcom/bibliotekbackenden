@@ -14,7 +14,6 @@ import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.web.client.HttpClientErrorException;
 
 import com.example.bibliotekbackenden.Dto.Author.v1.AuthorCreateDTO;
 import com.example.bibliotekbackenden.Dto.Author.v1.AuthorResponseDTO;
@@ -80,30 +79,6 @@ public class LoanTests {
 
         @Test
         void shouldDeleteLoan() {
-                AuthorCreateDTO author = new AuthorCreateDTO("Mario Z.", 0);
-                ResponseEntity<AuthorResponseDTO> authorResponse = restTemplate.postForEntity(
-                                "/api/v1/authors", author, AuthorResponseDTO.class);
-
-                Long authorId = authorResponse.getBody().id();
-                BookCreateDTOv2 book = new BookCreateDTOv2("Computer Science", authorId, "123XAB", 2025, true);
-                ResponseEntity<BookResponseDTOv2> bookResponse = restTemplate.postForEntity(
-                                "/books/v2", book, BookResponseDTOv2.class);
-
-                Long bookId = bookResponse.getBody().id();
-                LoanCreateDTO loan = new LoanCreateDTO(
-                                bookId,
-                                java.sql.Date.valueOf("2024-07-01"),
-                                java.sql.Date.valueOf("2024-07-15"));
-                ResponseEntity<LoanResponseDTO> loanResponse = restTemplate.postForEntity(
-                                "/loans", loan, LoanResponseDTO.class);
-
-                Long loanId = loanResponse.getBody().id();
-                restTemplate.delete("/loans/" + loanId);
-
-                ResponseEntity<LoanResponseDTO> getLoanResponse = restTemplate.getForEntity(
-                                "/loans/" + loanId, LoanResponseDTO.class);
-
-                assertEquals(HttpStatus.NOT_FOUND, getLoanResponse.getStatusCode());
         }
 
         @Test

@@ -1,7 +1,6 @@
 package com.example.bibliotekbackenden.Entity;
 
 import java.sql.Date;
-
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
