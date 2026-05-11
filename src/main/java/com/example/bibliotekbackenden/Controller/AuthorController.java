@@ -17,59 +17,60 @@ import com.example.bibliotekbackenden.Entity.Author;
 import com.example.bibliotekbackenden.Entity.Book;
 import com.example.bibliotekbackenden.Service.AuthorService;
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("api/v1/authors")
 public class AuthorController {
-    private final AuthorService authorService;
+        private final AuthorService authorService;
 
-    public AuthorController(AuthorService authorService) {
-        this.authorService = authorService;
-    }
+        public AuthorController(AuthorService authorService) {
+                this.authorService = authorService;
+        }
 
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    @Operation(summary = "Create author")
-    public AuthorResponseDTO createAuthor(@RequestBody AuthorCreateDTO dto) {
-        Author author = authorService.createAuthor(dto.name());
+        @PostMapping
+        @ResponseStatus(HttpStatus.CREATED)
+        @Operation(summary = "Create author")
+        public AuthorResponseDTO createAuthor(@Valid @RequestBody AuthorCreateDTO dto) {
+                Author author = authorService.createAuthor(dto.name());
 
-        return new AuthorResponseDTO(
-                author.getId(),
-                author.getName(),
-                author.getBooks() != null ? author.getBooks().size() : 0);
-    }
+                return new AuthorResponseDTO(
+                                author.getId(),
+                                author.getName(),
+                                author.getBooks() != null ? author.getBooks().size() : 0);
+        }
 
-    @PutMapping("/{id}")
-    @Operation(summary = "Update author")
-    public Author updateAuthor(@PathVariable("id") Long id, @RequestBody AuthorCreateDTO dto) {
-            return authorService.updateAuthor(id, dto.name());
-    }
+        @PutMapping("/{id}")
+        @Operation(summary = "Update author")
+        public Author updateAuthor(@PathVariable("id") Long id, @Valid @RequestBody AuthorCreateDTO dto) {
+                return authorService.updateAuthor(id, dto.name());
+        }
 
-    @GetMapping("/{id}")
-    @Operation(summary = "Get author by id")
-    public AuthorResponseDTO getAuthor(@PathVariable("id") Long id) {
-            Author author = authorService.getAuthorById(id);
-            return new AuthorResponseDTO(
-                    author.getId(),
-                    author.getName(),
-                    author.getBooks() != null ? author.getBooks().size() : 0);
-    }
+        @GetMapping("/{id}")
+        @Operation(summary = "Get author by id")
+        public AuthorResponseDTO getAuthor(@PathVariable("id") Long id) {
+                Author author = authorService.getAuthorById(id);
+                return new AuthorResponseDTO(
+                                author.getId(),
+                                author.getName(),
+                                author.getBooks() != null ? author.getBooks().size() : 0);
+        }
 
-    @GetMapping("/{id}/books")
-    @Operation(summary = "Get books by author id")
-    public List<Book> getBooksByAuthorId(@PathVariable("id") Long id) {
-            return authorService.getBooksForAuthor(id).getBooks();
-    }
+        @GetMapping("/{id}/books")
+        @Operation(summary = "Get books by author id")
+        public List<Book> getBooksByAuthorId(@PathVariable("id") Long id) {
+                return authorService.getBooksForAuthor(id).getBooks();
+        }
 
-    @GetMapping
-    @Operation(summary = "Get all authors")
-    public Iterable<Author> getAllAuthors() {
-            return authorService.getAllAuthors();
-    }
+        @GetMapping
+        @Operation(summary = "Get all authors")
+        public Iterable<Author> getAllAuthors() {
+                return authorService.getAllAuthors();
+        }
 
-    @DeleteMapping("/{id}")
-    @Operation(summary = "Delete author by id")
-    public void deleteAuthor(@PathVariable("id") Long id) {
-            authorService.deleteAuthor(id);
-    }
+        @DeleteMapping("/{id}")
+        @Operation(summary = "Delete author by id")
+        public void deleteAuthor(@PathVariable("id") Long id) {
+                authorService.deleteAuthor(id);
+        }
 }

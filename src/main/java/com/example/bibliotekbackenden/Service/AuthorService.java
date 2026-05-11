@@ -36,9 +36,14 @@ public class AuthorService {
 
     // Get author with their books (relationship handles loading via @OneToMany)
     public Author getBooksForAuthor(Long id) {
-        // TODO - optimize so that gives feedback if author doesnt have any books
-        return authorRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Author not found"));
+        try {
+            Author author = getAuthorById(id);
+            // Accessing books to ensure they are loaded (if using lazy loading)
+            author.getBooks().size();
+            return author;
+        } catch (ResponseStatusException e) {
+            throw new AuthorNotFoundException(id);
+        }
     }
 
     public Iterable<Author> getAllAuthors() {

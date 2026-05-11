@@ -37,7 +37,7 @@ public class BookService {
         return bookRepository.save(book);
     }
 
-    // Method with updated attributes
+    // V2 Method with updated attributes
     public Book createBookV2(String title, Long authorId, String isbn, Integer publishedYear, boolean isAvailable) {
         Author author = authorRepository.findById(authorId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,

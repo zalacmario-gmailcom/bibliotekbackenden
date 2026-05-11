@@ -7,6 +7,7 @@ import com.example.bibliotekbackenden.Dto.Loan.v1.LoanResponseDTO;
 import com.example.bibliotekbackenden.Entity.Loan;
 import com.example.bibliotekbackenden.Service.LoanService;
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/loans")
@@ -23,7 +24,7 @@ public class LoanController {
     @PostMapping
     @Operation(summary = "Create loan")
     @ResponseStatus(HttpStatus.CREATED)
-    public LoanResponseDTO createLoan(@RequestBody LoanCreateDTO dto) {
+    public LoanResponseDTO createLoan(@Valid @RequestBody LoanCreateDTO dto) {
         Loan loan = loanService.createLoan(dto.bookId(), dto.loanDate(), dto.returnDate());
 
         return new LoanResponseDTO(
