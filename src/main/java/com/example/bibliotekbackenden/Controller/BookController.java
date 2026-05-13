@@ -12,7 +12,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/books")
+@RequestMapping("api/books")
 public class BookController {
         private final BookService bookService;
 
@@ -23,7 +23,7 @@ public class BookController {
         /**
          * CRUD operations for Book entity.
          */
-        @PostMapping
+        @PostMapping("/v1")
         @ResponseStatus(HttpStatus.CREATED)
         @Operation(summary = "Create book")
         public BookResponseDTO createBook(@Valid @RequestBody BookCreateDTO dto) {
@@ -58,6 +58,9 @@ public class BookController {
         @GetMapping("/{id}")
         @Operation(summary = "Get book by id")
         public BookResponseDTO getBookById(@PathVariable("id") Long id) {
+                
+                //TODO: Add versioning to this method to return BookResponseDTOv2 
+                // if the book version is v2, otherwise return BookResponseDTO
                 Book book = bookService.getBookById(id);
 
                 return new BookResponseDTO(

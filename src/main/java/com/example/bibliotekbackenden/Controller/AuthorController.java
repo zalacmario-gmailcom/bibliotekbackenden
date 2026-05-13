@@ -20,7 +20,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("api/v1/authors")
+@RequestMapping("api/authors")
 public class AuthorController {
         private final AuthorService authorService;
 

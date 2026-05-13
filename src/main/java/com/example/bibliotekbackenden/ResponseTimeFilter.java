@@ -24,7 +24,7 @@ public class ResponseTimeFilter implements Filter {
         chain.doFilter(request, response);
         long duration = System.currentTimeMillis() - startTime;
         HttpServletRequest req = (HttpServletRequest) request;
-        
+
         logger.info("Request URL: {}, Duration: {} ms", req.getRequestURL(), duration);
-    }   
+    }
 }

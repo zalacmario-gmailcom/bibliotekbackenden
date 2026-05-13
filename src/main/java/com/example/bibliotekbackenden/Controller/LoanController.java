@@ -10,7 +10,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/loans")
+@RequestMapping("api/loans")
 public class LoanController {
     private final LoanService loanService;
 
@@ -38,18 +38,18 @@ public class LoanController {
     @GetMapping("/{id}")
     @Operation(summary = "Get loan by id")
     public LoanResponseDTO getLoanById(@PathVariable("id") Long id) {
-            Loan loan = loanService.getLoanById(id);
-            return new LoanResponseDTO(
-                    loan.getId(),
-                    loan.getBookId(),
-                    loan.getBookTitle(),
-                    loan.getLoanDate(),
-                    loan.getReturnDate());
+        Loan loan = loanService.getLoanById(id);
+        return new LoanResponseDTO(
+                loan.getId(),
+                loan.getBookId(),
+                loan.getBookTitle(),
+                loan.getLoanDate(),
+                loan.getReturnDate());
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete loan by id")
     public void deleteLoan(@PathVariable("id") Long id) {
-            loanService.deleteLoan(id);
+        loanService.deleteLoan(id);
     }
 }
