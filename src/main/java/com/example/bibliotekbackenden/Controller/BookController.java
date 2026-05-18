@@ -9,10 +9,14 @@ import com.example.bibliotekbackenden.Dto.Book.v2.BookResponseDTOv2;
 import com.example.bibliotekbackenden.Entity.Book;
 import com.example.bibliotekbackenden.Service.BookService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("api/books")
+@SecurityRequirement(name = "Bearer")
+@Tag(name = "Book", description = "The Book API")
 public class BookController {
         private final BookService bookService;
 
@@ -58,8 +62,8 @@ public class BookController {
         @GetMapping("/{id}")
         @Operation(summary = "Get book by id")
         public BookResponseDTO getBookById(@PathVariable("id") Long id) {
-                
-                //TODO: Add versioning to this method to return BookResponseDTOv2 
+
+                // TODO: Add versioning to this method to return BookResponseDTOv2
                 // if the book version is v2, otherwise return BookResponseDTO
                 Book book = bookService.getBookById(id);
 

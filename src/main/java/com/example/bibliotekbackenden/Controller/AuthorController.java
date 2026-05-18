@@ -17,10 +17,14 @@ import com.example.bibliotekbackenden.Entity.Author;
 import com.example.bibliotekbackenden.Entity.Book;
 import com.example.bibliotekbackenden.Service.AuthorService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("api/authors")
+@SecurityRequirement(name = "Bearer")
+@Tag(name = "Authors", description = "Endpoints for managing authors")
 public class AuthorController {
         private final AuthorService authorService;
 

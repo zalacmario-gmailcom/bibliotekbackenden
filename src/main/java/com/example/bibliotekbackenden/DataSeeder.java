@@ -28,7 +28,7 @@ public class DataSeeder implements CommandLineRunner {
             return;
         }
 
-        for (int i = 0; i < 50000; i++) {
+        for (int i = 0; i < 100; i++) {
             Author author = new Author();
             author.setName("Author " + i);
             authorRepository.save(author);

@@ -7,10 +7,14 @@ import com.example.bibliotekbackenden.Dto.Loan.v1.LoanResponseDTO;
 import com.example.bibliotekbackenden.Entity.Loan;
 import com.example.bibliotekbackenden.Service.LoanService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("api/loans")
+@SecurityRequirement(name = "Bearer")
+@Tag(name = "Loans", description = "Endpoints for managing loans")
 public class LoanController {
     private final LoanService loanService;
 
