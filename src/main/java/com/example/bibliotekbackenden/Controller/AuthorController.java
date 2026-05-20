@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
@@ -19,6 +20,7 @@ import com.example.bibliotekbackenden.Service.AuthorService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 
 @RestController
@@ -26,11 +28,8 @@ import jakarta.validation.Valid;
 @SecurityRequirement(name = "Bearer")
 @Tag(name = "Authors", description = "Endpoints for managing authors")
 public class AuthorController {
-        private final AuthorService authorService;
-
-        public AuthorController(AuthorService authorService) {
-                this.authorService = authorService;
-        }
+        @Autowired
+        private AuthorService authorService;
 
         @PostMapping
         @ResponseStatus(HttpStatus.CREATED)
@@ -66,6 +65,7 @@ public class AuthorController {
                 return authorService.getBooksForAuthor(id).getBooks();
         }
 
+        @Transactional
         @GetMapping
         @Operation(summary = "Get all authors")
         public Iterable<Author> getAllAuthors() {

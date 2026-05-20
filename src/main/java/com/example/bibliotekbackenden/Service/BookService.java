@@ -2,6 +2,9 @@ package com.example.bibliotekbackenden.Service;
 
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import com.example.bibliotekbackenden.Entity.Author;
 import com.example.bibliotekbackenden.Entity.Book;
@@ -11,17 +14,15 @@ import com.example.bibliotekbackenden.Repository.BookRepository;
 
 @Service
 public class BookService {
-    private final BookRepository bookRepository;
-    private final AuthorRepository authorRepository;
-
-    public BookService(BookRepository bookRepository, AuthorRepository authorRepository) {
-        this.bookRepository = bookRepository;
-        this.authorRepository = authorRepository;
-    }
+    @Autowired
+    private BookRepository bookRepository;
+    @Autowired
+    private AuthorRepository authorRepository;
 
     /**
      * CRUD methods which will be used in the controller and repository
      */
+    @CacheEvict(value = "books", allEntries = true)
     public Book createBook(String title, Long authorId, String isbn, Integer publishedYear) {
         Author author = authorRepository.findById(authorId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
@@ -38,6 +39,7 @@ public class BookService {
     }
 
     // V2 Method with updated attributes
+    @CacheEvict(value = "books", allEntries = true)
     public Book createBookV2(String title, Long authorId, String isbn, Integer publishedYear, boolean isAvailable) {
         Author author = authorRepository.findById(authorId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
@@ -59,6 +61,7 @@ public class BookService {
                 .orElseThrow(() -> new BookNotFoundException(id));
     }
 
+    @Cacheable("books")
     public Iterable<Book> getAllBooks() {
         if (bookRepository.findAll().isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No books found");
@@ -67,6 +70,7 @@ public class BookService {
         }
     }
 
+    @CacheEvict(value = "books", allEntries = true)
     public Book updateBook(Long id, String title, String author, String isbn, Integer publishedYear,
             boolean isAvailable) {
         try {
@@ -83,6 +87,7 @@ public class BookService {
         }
     }
 
+    @CacheEvict(value = "books", allEntries = true)
     public Book deleteBook(Long id) {
         try {
             Book book = getBookById(id);

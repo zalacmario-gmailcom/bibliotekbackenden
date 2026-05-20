@@ -1,5 +1,8 @@
 package com.example.bibliotekbackenden.Service;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -9,15 +12,13 @@ import com.example.bibliotekbackenden.Repository.AuthorRepository;
 
 @Service
 public class AuthorService {
-    private final AuthorRepository authorRepository;
-
-    public AuthorService(AuthorRepository authorRepository) {
-        this.authorRepository = authorRepository;
-    }
+    @Autowired
+    private AuthorRepository authorRepository;
 
     /**
      * CRUD methods which will be used in the controller and repository
      */
+    @CacheEvict(value = "authors", allEntries = true)
     public Author createAuthor(String name) {
         try {
             Author author = new Author();
@@ -46,10 +47,12 @@ public class AuthorService {
         }
     }
 
+    @Cacheable("authors")
     public Iterable<Author> getAllAuthors() {
         return authorRepository.findAll();
     }
 
+    @CacheEvict(value = "authors", allEntries = true)
     public Author updateAuthor(Long id, String name) {
         try {
             Author author = getAuthorById(id);
@@ -60,6 +63,7 @@ public class AuthorService {
         }
     }
 
+    @CacheEvict(value = "authors", allEntries = true)
     public void deleteAuthor(Long id) {
         try {
             Author author = getAuthorById(id);

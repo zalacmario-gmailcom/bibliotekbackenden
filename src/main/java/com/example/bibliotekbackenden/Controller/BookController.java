@@ -1,5 +1,6 @@
 package com.example.bibliotekbackenden.Controller;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import com.example.bibliotekbackenden.Dto.Book.v1.BookCreateDTO;
@@ -18,11 +19,8 @@ import jakarta.validation.Valid;
 @SecurityRequirement(name = "Bearer")
 @Tag(name = "Book", description = "The Book API")
 public class BookController {
-        private final BookService bookService;
-
-        public BookController(BookService bookService) {
-                this.bookService = bookService;
-        }
+        @Autowired
+        private BookService bookService;
 
         /**
          * CRUD operations for Book entity.

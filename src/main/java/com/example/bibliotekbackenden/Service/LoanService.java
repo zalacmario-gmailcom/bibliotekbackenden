@@ -1,6 +1,8 @@
 package com.example.bibliotekbackenden.Service;
 
 import java.sql.Date;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.example.bibliotekbackenden.Entity.Book;
 import com.example.bibliotekbackenden.Entity.Loan;
@@ -14,13 +16,10 @@ import jakarta.transaction.Transactional;
 
 @Service
 public class LoanService {
-    private final LoanRepository loanRepository;
-    private final BookRepository bookRepository;
-
-    public LoanService(LoanRepository loanRepository, BookRepository bookRepository) {
-        this.loanRepository = loanRepository;
-        this.bookRepository = bookRepository;
-    }
+    @Autowired
+    private LoanRepository loanRepository;
+    @Autowired
+    private BookRepository bookRepository;
 
     /**
      * CRUD methods without updated.
@@ -30,22 +29,22 @@ public class LoanService {
         // Check if book already has an active loan (query within transaction)
         if (loanRepository.findById(bookId).isPresent()) {
             throw new BookNotAvailableException(bookId);
-        }
+        } else {
+            // Attempt to create loan - if another thread modified Book, exception thrown
+            try {
+                Book book = bookRepository.findById(bookId)
+                        .orElseThrow(() -> new AuthorNotFoundException(bookId));
 
-        Book book = bookRepository.findById(bookId)
-                .orElseThrow(() -> new AuthorNotFoundException(bookId));
+                Loan loan = new Loan();
+                loan.setBook(book);
+                loan.setBookTitle(book.getTitle());
+                loan.setLoanDate(loanDate != null ? loanDate : new Date(System.currentTimeMillis()));
+                loan.setReturnDate(returnDate);
 
-        Loan loan = new Loan();
-        loan.setBook(book);
-        loan.setBookTitle(book.getTitle());
-        loan.setLoanDate(loanDate != null ? loanDate : new Date(System.currentTimeMillis()));
-        loan.setReturnDate(returnDate);
-
-        // Attempt to create loan - if another thread modified Book, exception thrown
-        try {
-            return loanRepository.save(loan);
-        } catch (OptimisticLockException e) {
-            throw new BookNotAvailableException(bookId);
+                return loanRepository.save(loan);
+            } catch (OptimisticLockException e) {
+                throw new BookNotAvailableException(bookId);
+            }
         }
     }
 

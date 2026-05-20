@@ -1,7 +1,6 @@
 package com.example.bibliotekbackenden;
 
 import java.util.Collections;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
@@ -9,7 +8,6 @@ import org.springframework.vault.core.VaultKeyValueOperations;
 import org.springframework.vault.core.VaultKeyValueOperationsSupport;
 import org.springframework.vault.core.VaultTemplate;
 import org.springframework.vault.support.VaultResponse;
-
 import com.example.bibliotekbackenden.Entity.Author;
 import com.example.bibliotekbackenden.Entity.Book;
 import com.example.bibliotekbackenden.Repository.AuthorRepository;
@@ -25,15 +23,13 @@ public class DataSeeder implements CommandLineRunner {
 
     // You can add methods here to seed initial data into the database
     public void seedData() {
-        if (authorRepository.findAll().size() > 0) {
+        if (authorRepository.findAll().size() > 0 && bookRepository.findAll().size() > 0) {
+            bookRepository.deleteAll();
+            authorRepository.deleteAll();
             return;
         }
 
-        if (bookRepository.findAll().size() > 0) {
-            return;
-        }
-
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 50000; i++) {
             Author author = new Author();
             author.setName("Author " + i);
             authorRepository.save(author);
@@ -43,6 +39,7 @@ public class DataSeeder implements CommandLineRunner {
             book.setAuthorBook(author);
             book.setIsbn("ISBN-" + i);
             book.setPublishedYear(2000);
+            book.setAvailable(true);
             bookRepository.save(book);
         }
     }

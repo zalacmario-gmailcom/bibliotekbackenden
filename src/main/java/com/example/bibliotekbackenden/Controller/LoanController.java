@@ -1,5 +1,6 @@
 package com.example.bibliotekbackenden.Controller;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import com.example.bibliotekbackenden.Dto.Loan.v1.LoanCreateDTO;
@@ -16,11 +17,8 @@ import jakarta.validation.Valid;
 @SecurityRequirement(name = "Bearer")
 @Tag(name = "Loans", description = "Endpoints for managing loans")
 public class LoanController {
-    private final LoanService loanService;
-
-    public LoanController(LoanService loanService) {
-        this.loanService = loanService;
-    }
+    @Autowired
+    private LoanService loanService;
 
     /**
      * CRUD operations for Loan entity.

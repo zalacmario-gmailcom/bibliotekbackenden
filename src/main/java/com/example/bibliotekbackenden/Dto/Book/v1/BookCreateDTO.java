@@ -5,11 +5,11 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
 public record BookCreateDTO(
-                @NotEmpty(message = "Title is required") String title,
+        @NotEmpty(message = "Title is required") String title,
 
-                @NotNull(message = "Author ID is required") Long authorId,
+        @NotNull(message = "Author ID is required") Long authorId,
 
-                @NotEmpty(message = "ISBN is required") String isbn,
+        @NotEmpty(message = "ISBN is required") String isbn,
 
-                @NotNull(message = "Published year is required") @Min(value = 0, message = "Published year cannot be negative") Integer publishedYear) {
+        @NotNull(message = "Published year is required") @Min(value = 0, message = "Published year cannot be negative") Integer publishedYear) {
 }
