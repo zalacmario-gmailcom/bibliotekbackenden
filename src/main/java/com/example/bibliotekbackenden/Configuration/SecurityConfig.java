@@ -1,4 +1,4 @@
-package com.example.bibliotekbackenden.Security;
+package com.example.bibliotekbackenden.Configuration;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,8 +14,8 @@ import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
 
 @Configuration
 @EnableWebSecurity
-@OpenAPIDefinition(info = @io.swagger.v3.oas.annotations.info.Info(title = "Bibliotek API", version = "1.0", description = "API för att hantera bibliotekets böcker och användare"))
 @SecurityScheme(name = "Bearer", type = SecuritySchemeType.HTTP, bearerFormat = "JWT", scheme = "bearer")
+@OpenAPIDefinition(info = @io.swagger.v3.oas.annotations.info.Info(title = "Bibliotek API", version = "1.0", description = "API för att hantera bibliotekets böcker och användare"))
 public class SecurityConfig {
     private JwtFilter jwtFilter;
 

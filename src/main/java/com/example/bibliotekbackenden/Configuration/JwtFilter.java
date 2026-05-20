@@ -1,4 +1,4 @@
-package com.example.bibliotekbackenden.Security;
+package com.example.bibliotekbackenden.Configuration;
 
 import java.io.IOException;
 import java.util.List;
@@ -34,7 +34,8 @@ public class JwtFilter extends OncePerRequestFilter {
                 Boolean isValid = jwtUtil.validateToken(token);
                 if (isValid) {
                     String username = jwtUtil.extractUsername(token);
-                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(username,
+                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                            username,
                             null, List.of());
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                 }
@@ -45,5 +46,4 @@ public class JwtFilter extends OncePerRequestFilter {
         }
         filterChain.doFilter(request, response);
     }
-
 }

@@ -2,7 +2,7 @@ package com.example.bibliotekbackenden.Service;
 
 import org.springframework.stereotype.Service;
 
-import com.example.bibliotekbackenden.Security.JwtUtil;
+import com.example.bibliotekbackenden.Configuration.JwtUtil;
 
 @Service
 public class AuthService {
