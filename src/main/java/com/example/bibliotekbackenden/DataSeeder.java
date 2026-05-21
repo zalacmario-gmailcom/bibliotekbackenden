@@ -3,6 +3,7 @@ package com.example.bibliotekbackenden;
 import java.util.Collections;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.vault.core.VaultKeyValueOperations;
 import org.springframework.vault.core.VaultKeyValueOperationsSupport;
@@ -14,6 +15,7 @@ import com.example.bibliotekbackenden.Repository.AuthorRepository;
 import com.example.bibliotekbackenden.Repository.BookRepository;
 
 @Component
+@Profile("!test")
 public class DataSeeder implements CommandLineRunner {
 
     @Autowired

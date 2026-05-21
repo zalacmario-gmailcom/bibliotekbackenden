@@ -36,13 +36,9 @@ public class GlobalExceptionHandler {
         return ex.getMessage();
     }
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public Map<String, String> handleValidationExceptions(MethodArgumentNotValidException ex) {
-        Map<String, String> errors = new HashMap<>();
-        for (FieldError error : ex.getBindingResult().getFieldErrors()) {
-            errors.put(error.getField(), error.getDefaultMessage());
-        }
-        return errors;
+    @ExceptionHandler(InvalidCredentialsException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public String handleInvalidCredentials(InvalidCredentialsException ex) {
+        return ex.getMessage();
     }
 }

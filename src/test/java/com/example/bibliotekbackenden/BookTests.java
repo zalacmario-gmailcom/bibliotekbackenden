@@ -1,125 +1,228 @@
 package com.example.bibliotekbackenden;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import com.example.bibliotekbackenden.Configuration.JwtUtil;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.http.HttpMethod;
-import org.springframework.test.annotation.DirtiesContext;
-import com.example.bibliotekbackenden.Dto.Author.v1.AuthorCreateDTO;
-import com.example.bibliotekbackenden.Dto.Author.v1.AuthorResponseDTO;
-import com.example.bibliotekbackenden.Dto.Book.v2.BookCreateDTOv2;
-import com.example.bibliotekbackenden.Dto.Book.v2.BookResponseDTOv2;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
-public class BookTests {
+import java.util.Map;
+import java.util.UUID;
 
-    @Autowired
-    private TestRestTemplate restTemplate;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-    @Test
-    void shouldCreateBookV2() {
-        AuthorCreateDTO author = new AuthorCreateDTO("Mario Z.", 0);
-        ResponseEntity<AuthorResponseDTO> authorResponse = restTemplate.postForEntity(
-                "/api/v1/authors", author, AuthorResponseDTO.class);
+@SpringBootTest
+@ActiveProfiles("test")
+@AutoConfigureMockMvc
+class BookTests {
+        @Autowired
+        private MockMvc mockMvc;
+        @Autowired
+        private JwtUtil jwtUtil;
+        @Autowired
+        private ObjectMapper objectMapper;
 
-        Long authorId = authorResponse.getBody().id();
+        private String token() {
+                return "Bearer " + jwtUtil.generateToken("admin");
+        }
 
-        BookCreateDTOv2 book = new BookCreateDTOv2("Computer Science", authorId, "123XAB", 2025, true);
+        // ---------- Helper Methods ----------
 
-        ResponseEntity<BookResponseDTOv2> bookResponse = restTemplate.postForEntity(
-                "/books/v2", book, BookResponseDTOv2.class);
+        private ResultActions authorizedPost(String url, Object body) throws Exception {
+                return mockMvc.perform(post(url)
+                                .header("Authorization", token())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(body)));
+        }
 
-        assertEquals(HttpStatus.CREATED, bookResponse.getStatusCode());
-    }
+        private ResultActions authorizedPut(String url, Object body) throws Exception {
+                return mockMvc.perform(put(url)
+                                .header("Authorization", token())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(body)));
+        }
 
-    @Test
-    void shouldGetBookById() {
-        AuthorCreateDTO author = new AuthorCreateDTO("Mario Z.", 0);
-        ResponseEntity<AuthorResponseDTO> authorResponse = restTemplate.postForEntity(
-                "/api/v1/authors", author, AuthorResponseDTO.class);
+        private ResultActions authorizedGet(String url) throws Exception {
+                return mockMvc.perform(get(url)
+                                .header("Authorization", token()));
+        }
 
-        Long authorId = authorResponse.getBody().id();
+        private ResultActions authorizedDelete(String url) throws Exception {
+                return mockMvc.perform(delete(url)
+                                .header("Authorization", token()));
+        }
 
-        BookCreateDTOv2 book = new BookCreateDTOv2("Computer Science", authorId, "123XAB", 2025, true);
-        ResponseEntity<BookResponseDTOv2> bookResponse = restTemplate.postForEntity(
-                "/books/v2", book, BookResponseDTOv2.class);
+        // ---------- Test Data Creators ----------
 
-        Long bookId = bookResponse.getBody().id();
+        private Long createAuthor(String name) throws Exception {
 
-        ResponseEntity<BookResponseDTOv2> getBookByIdResponse = restTemplate.getForEntity(
-                "/books/" + bookId, BookResponseDTOv2.class);
+                String response = authorizedPost("/api/authors",
+                                Map.of("name", name))
+                                .andExpect(status().isCreated())
+                                .andReturn()
+                                .getResponse()
+                                .getContentAsString();
 
-        assertEquals(HttpStatus.OK, getBookByIdResponse.getStatusCode());
-    }
+                return objectMapper.readTree(response)
+                                .get("id")
+                                .asLong();
+        }
 
-    @Test
-    void shouldGetAllBooks() {
-        AuthorCreateDTO author = new AuthorCreateDTO("Mario Z.", 0);
-        ResponseEntity<AuthorResponseDTO> authorResponse = restTemplate.postForEntity(
-                "/api/v1/authors", author, AuthorResponseDTO.class);
+        private Long createBook(
+                        String title,
+                        Long authorId,
+                        String isbn,
+                        int publishedYear,
+                        boolean isAvailable) throws Exception {
 
-        Long authorId = authorResponse.getBody().id();
+                var body = Map.of(
+                                "title", title,
+                                "authorId", authorId,
+                                "isbn", isbn,
+                                "publishedYear", publishedYear,
+                                "isAvailable", isAvailable);
 
-        BookCreateDTOv2 book = new BookCreateDTOv2("Computer Science", authorId, "123XAB", 2025, true);
-        ResponseEntity<BookResponseDTOv2> bookResponse = restTemplate.postForEntity(
-                "/books/v2", book, BookResponseDTOv2.class);
+                String response = authorizedPost("/api/books/v2", body)
+                                .andExpect(status().isCreated())
+                                .andReturn()
+                                .getResponse()
+                                .getContentAsString();
 
-        ResponseEntity<BookResponseDTOv2[]> getAllBooksResponse = restTemplate.getForEntity(
-                "/books", BookResponseDTOv2[].class);
+                return objectMapper.readTree(response)
+                                .get("id")
+                                .asLong();
+        }
 
-        assertEquals(HttpStatus.CREATED, bookResponse.getStatusCode());
-        assertEquals(HttpStatus.OK, getAllBooksResponse.getStatusCode());
-    }
+        // ---------- Tests ----------
 
-    @Test
-    void shouldUpdateBook() {
-        AuthorCreateDTO author = new AuthorCreateDTO("Mario Z.", 0);
-        ResponseEntity<AuthorResponseDTO> authorResponse = restTemplate.postForEntity(
-                "/api/v1/authors", author, AuthorResponseDTO.class);
+        @Test
+        void shouldCreateBookV2() throws Exception {
 
-        Long authorId = authorResponse.getBody().id();
+                String authorName = "Author-" + UUID.randomUUID();
+                Long authorId = createAuthor(authorName);
 
-        BookCreateDTOv2 book = new BookCreateDTOv2("Computer Science", authorId, "123XAB", 2025, true);
-        ResponseEntity<BookResponseDTOv2> bookResponse = restTemplate.postForEntity(
-                "/books/v2", book, BookResponseDTOv2.class);
+                String title = "Computer Science-" + UUID.randomUUID();
+                String isbn = "ISBN-" + UUID.randomUUID();
 
-        Long bookId = bookResponse.getBody().id();
+                var body = Map.of(
+                                "title", title,
+                                "authorId", authorId,
+                                "isbn", isbn,
+                                "publishedYear", 2025,
+                                "isAvailable", true);
 
-        BookCreateDTOv2 updatedBook = new BookCreateDTOv2("Computer ScienceV2", authorId, "123XABv2", 2022, false);
-        ResponseEntity<BookResponseDTOv2> updatedBookResponse = restTemplate.exchange(
-                "/books/" + bookId, HttpMethod.PUT, new HttpEntity<>(updatedBook), BookResponseDTOv2.class);
+                authorizedPost("/api/books/v2", body)
+                                .andExpect(status().isCreated())
+                                .andExpect(jsonPath("$.id").exists())
+                                .andExpect(jsonPath("$.title").value(title))
+                                .andExpect(jsonPath("$.author").value(authorName))
+                                .andExpect(jsonPath("$.isbn").value(isbn))
+                                .andExpect(jsonPath("$.publishedYear").value(2025))
+                                .andExpect(jsonPath("$.isAvailable").value(true))
+                                .andExpect(jsonPath("$.version").value("v2"));
+        }
 
-        assertEquals(HttpStatus.OK, updatedBookResponse.getStatusCode());
-    }
+        @Test
+        void shouldGetBookById() throws Exception {
 
-    @Test
-    void shouldDeleteBook() {
-        AuthorCreateDTO author = new AuthorCreateDTO("Mario Z.", 0);
-        ResponseEntity<AuthorResponseDTO> authorResponse = restTemplate.postForEntity(
-                "/api/v1/authors", author, AuthorResponseDTO.class);
+                String authorName = "Author-" + UUID.randomUUID();
+                Long authorId = createAuthor(authorName);
 
-        Long authorId = authorResponse.getBody().id();
+                String title = "Algorithms-" + UUID.randomUUID();
+                String isbn = "ISBN-" + UUID.randomUUID();
 
-        BookCreateDTOv2 book = new BookCreateDTOv2("Computer Science", authorId, "123XAB", 2025, true);
-        ResponseEntity<BookResponseDTOv2> bookResponse = restTemplate.postForEntity(
-                "/books/v2", book, BookResponseDTOv2.class);
+                Long bookId = createBook(title, authorId, isbn, 2024, true);
 
-        Long bookId = bookResponse.getBody().id();
+                authorizedGet("/api/books/" + bookId)
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.id").value(bookId))
+                                .andExpect(jsonPath("$.title").value(title))
+                                .andExpect(jsonPath("$.author").value(authorName))
+                                .andExpect(jsonPath("$.isbn").value(isbn))
+                                .andExpect(jsonPath("$.publishedYear").value(2024));
+        }
 
-        restTemplate.delete("/books/" + bookId);
+        @Test
+        void shouldGetAllBooks() throws Exception {
 
-        ResponseEntity<BookResponseDTOv2[]> getAllBooksResponse = restTemplate.getForEntity(
-                "/books", BookResponseDTOv2[].class);
+                Long authorId = createAuthor("Author-" + UUID.randomUUID());
 
-        assertEquals(HttpStatus.OK, getAllBooksResponse.getStatusCode());
-        assertEquals(0, getAllBooksResponse.getBody().length);
-    }
+                createBook(
+                                "Databases-" + UUID.randomUUID(),
+                                authorId,
+                                "ISBN-" + UUID.randomUUID(),
+                                2023,
+                                true);
 
+                mockMvc.perform(get("/api/books")
+                                .param("page", "0")
+                                .param("size", "5")
+                                .header("Authorization", token()))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.content").isArray())
+                                .andExpect(jsonPath("$.content[0].id").exists())
+                                .andExpect(jsonPath("$.content[0].title").exists());
+        }
+
+        @Test
+        void shouldUpdateBook() throws Exception {
+
+                String authorName = "Author-" + UUID.randomUUID();
+                Long authorId = createAuthor(authorName);
+
+                Long bookId = createBook(
+                                "Networks-" + UUID.randomUUID(),
+                                authorId,
+                                "ISBN-" + UUID.randomUUID(),
+                                2022,
+                                true);
+
+                String updatedTitle = "Networks Updated-" + UUID.randomUUID();
+                String updatedIsbn = "ISBN-UPDATED-" + UUID.randomUUID();
+
+                var body = Map.of(
+                                "id", bookId,
+                                "title", updatedTitle,
+                                "author", authorName,
+                                "isbn", updatedIsbn,
+                                "publishedYear", 2026,
+                                "isAvailable", false,
+                                "version", "v2");
+
+                authorizedPut("/api/books/" + bookId, body)
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.id").value(bookId))
+                                .andExpect(jsonPath("$.title").value(updatedTitle))
+                                .andExpect(jsonPath("$.author").value(authorName))
+                                .andExpect(jsonPath("$.isbn").value(updatedIsbn))
+                                .andExpect(jsonPath("$.publishedYear").value(2026))
+                                .andExpect(jsonPath("$.available").value(false));
+        }
+
+        @Test
+        void shouldDeleteBook() throws Exception {
+
+                Long authorId = createAuthor("Author-" + UUID.randomUUID());
+
+                Long bookId = createBook(
+                                "Delete Me-" + UUID.randomUUID(),
+                                authorId,
+                                "ISBN-" + UUID.randomUUID(),
+                                2020,
+                                true);
+
+                authorizedDelete("/api/books/" + bookId)
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.id").value(bookId));
+
+                authorizedGet("/api/books/" + bookId)
+                                .andExpect(status().isNotFound());
+        }
 }

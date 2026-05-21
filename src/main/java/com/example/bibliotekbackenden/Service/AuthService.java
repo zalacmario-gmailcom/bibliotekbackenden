@@ -3,6 +3,7 @@ package com.example.bibliotekbackenden.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.example.bibliotekbackenden.Configuration.JwtUtil;
+import com.example.bibliotekbackenden.Exception.InvalidCredentialsException;
 
 @Service
 public class AuthService {
@@ -13,7 +14,7 @@ public class AuthService {
         if ("admin".equals(username) && "password".equals(password)) {
             return jwtUtil.generateToken(username);
         } else {
-            throw new RuntimeException("Invalid username or password");
+            throw new InvalidCredentialsException();
         }
     }
 }

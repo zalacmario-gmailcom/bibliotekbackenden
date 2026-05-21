@@ -6,13 +6,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.example.bibliotekbackenden.Entity.Book;
 import com.example.bibliotekbackenden.Entity.Loan;
-import com.example.bibliotekbackenden.Exception.AuthorNotFoundException;
 import com.example.bibliotekbackenden.Exception.BookNotAvailableException;
+import com.example.bibliotekbackenden.Exception.BookNotFoundException;
 import com.example.bibliotekbackenden.Exception.LoanNotFoundException;
 import com.example.bibliotekbackenden.Repository.BookRepository;
 import com.example.bibliotekbackenden.Repository.LoanRepository;
-import jakarta.persistence.OptimisticLockException;
 import jakarta.transaction.Transactional;
+import org.springframework.dao.DataIntegrityViolationException;
 
 @Service
 public class LoanService {
@@ -27,24 +27,23 @@ public class LoanService {
     @Transactional
     public Loan createLoan(Long bookId, Date loanDate, Date returnDate) {
         // Check if book already has an active loan (query within transaction)
-        if (loanRepository.findById(bookId).isPresent()) {
+        if (loanRepository.existsByBook_Id(bookId)) {
             throw new BookNotAvailableException(bookId);
-        } else {
-            // Attempt to create loan - if another thread modified Book, exception thrown
-            try {
-                Book book = bookRepository.findById(bookId)
-                        .orElseThrow(() -> new AuthorNotFoundException(bookId));
+        }
+        // Attempt to create loan - if another thread modified Book, exception thrown
+        try {
+            Book book = bookRepository.findById(bookId)
+                    .orElseThrow(() -> new BookNotFoundException(bookId));
 
-                Loan loan = new Loan();
-                loan.setBook(book);
-                loan.setBookTitle(book.getTitle());
-                loan.setLoanDate(loanDate != null ? loanDate : new Date(System.currentTimeMillis()));
-                loan.setReturnDate(returnDate);
+            Loan loan = new Loan();
+            loan.setBook(book);
+            loan.setBookTitle(book.getTitle());
+            loan.setLoanDate(loanDate != null ? loanDate : new Date(System.currentTimeMillis()));
+            loan.setReturnDate(returnDate);
 
-                return loanRepository.save(loan);
-            } catch (OptimisticLockException e) {
-                throw new BookNotAvailableException(bookId);
-            }
+            return loanRepository.saveAndFlush(loan);
+        } catch (DataIntegrityViolationException e) {
+            throw new BookNotAvailableException(bookId);
         }
     }
 

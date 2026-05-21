@@ -76,7 +76,7 @@ public class AuthorController {
 
         @DeleteMapping("/{id}")
         @Operation(summary = "Delete author by id")
-        public void deleteAuthor(@PathVariable("id") Long id) {
-                authorService.deleteAuthor(id);
+        public Author deleteAuthor(@PathVariable("id") Long id) {
+                return authorService.deleteAuthor(id);
         }
 }

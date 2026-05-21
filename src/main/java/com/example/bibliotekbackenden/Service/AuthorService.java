@@ -70,10 +70,13 @@ public class AuthorService {
     }
 
     @CacheEvict(value = "authors", allEntries = true)
-    public void deleteAuthor(Long id) {
+    public Author deleteAuthor(Long id) {
         try {
             Author author = getAuthorById(id);
+
             authorRepository.delete(author);
+
+            return author;
         } catch (ResponseStatusException e) {
             throw new AuthorNotFoundException(id);
         }
