@@ -6,41 +6,38 @@ Projekten handlar om ett enklare bibliotek system med endast backend delen. Bibl
 
 ## Hur fungerar programmet
 
-#### Kör programmet med:
+#### 1. Vault & Redis
+
+- Programmet kräver att Vault applikation ska vara i gång innan programmet kan startas
+- För att vissa Endpoint ska kunna fungera på rätt sätt Redis server ska vara igång också
+
+#### 2. Efter båda Vault och Redis är i gång, programmet kan startas med kommando:
 
 `./gradlew bootRun`
 
-#### Testa Data bas med: 
+#### 3. Testa Data bas med: 
 http://localhost:8080/h2-console
 
-#### Kolla endpoints:
+#### 4. Testa endpoints:
 http://localhost:8080/swagger-ui.html
 
-När main funktionen körs med `./gradlew bootRun` och pragrammet är i gång två länkar som är nämnda övan hjälper oss testa testa programmet. 
+#### 5. Logga in:
+- För att kunna använda alla endpoints. Man ska authentizera sig med 
+{
+    "user": "admin"
+    "password": "password"
+}
+- I server responsen ska genereras ett Token.
+- Token som är innanför `" "` skriver in i `Authorize`
+
+---
+
+När Vault och Redis är igång och main funktionen körs med `./gradlew bootRun` pragrammet kan testas. Det gör vi med hjälp av två länkar som är nämnda övan. 
 
 Den första öppnar H2 Databas vilken låter dig som användare se vad som finns i data basen och hur olika tabeller ser ut. Samtidigt den kan användas för att utföra SQL queris.
 
-Den andra länken öppnar swagger some är väldigt enkel api kontroller. Hur fungerar swagger? I bilden nedan ser vi olika anrop som användare kan få göra med kort beskriv
-- book-controller:
-    - DELETE anrop | söker efter bok med specifik id och raderar den
-    - GET anrop | söker efter bok med specifik id
-    - GET anrop | en till GET anrop som låter använder få se på alla böcker
-    - POST anrop | här matar användare in attributer för att skapa bok av version ett
-    - POST anrop | här matar användare in attributer för att skapa bok av version två
-    - PUT anrop | söker efter bok med specifik id och låter dig mata in nya attributer
+Den andra länken öppnar swagger some är väldigt enkel api kontroller. Hur fungerar swagger? I bilden nedan ser vi olika anrop som användare kan få göra med kort beskriv, innan man kan göra de man behöver endast loggas in.
 
-- author-controller
-    - DELETE anrop | söker efter author med specifik id och låter användare ta bort den (Funderar om alla böcker är först borttagna)
-    - GET anrop | söker efter author med specifik id
-    - GET anrop | söker efter alla authors
-    - GET anrop | söker efter author med specifik id för att visa alla böcker han har skrivit
-    - POST anrop | här matar användare in attributer för att söka en author
-    - PUT anrop | söker efter author med specifik id och låter användare ändra på namnet
-
-- loan-controller
-    - DELETE anrop | söker efter lån med specifik id och tar bort den
-    - GET anrop | söker efter lån med specifik id
-    - POST anrop | låter användare mata in ID av en bok som hen vill låna och sätter tiden lånet har gjorts
 <img src="./image.png" width="700">
 
 ## Prestand Testing med JMeter
