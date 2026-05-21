@@ -31,6 +31,7 @@ public class SecurityConfig {
                         .anyRequest().authenticated())
                 .sessionManagement(management -> management.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(new RateLimitFilter(), JwtFilter.class)
                 .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable()));
 
         return http.build();
