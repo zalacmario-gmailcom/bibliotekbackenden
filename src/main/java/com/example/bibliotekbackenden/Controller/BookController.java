@@ -1,6 +1,8 @@
 package com.example.bibliotekbackenden.Controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import com.example.bibliotekbackenden.Dto.Book.v1.BookCreateDTO;
@@ -75,8 +77,8 @@ public class BookController {
 
         @GetMapping
         @Operation(summary = "Get all books")
-        public Iterable<Book> getAllBooks() {
-                return bookService.getAllBooks();
+        public Page<Book> getAllBooks(Pageable pageable) {
+                return bookService.getAllBooks(pageable);
         }
 
         @PutMapping("/{id}")

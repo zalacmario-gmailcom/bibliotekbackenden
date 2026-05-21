@@ -5,6 +5,8 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import com.example.bibliotekbackenden.Entity.Author;
 import com.example.bibliotekbackenden.Entity.Book;
@@ -62,11 +64,11 @@ public class BookService {
     }
 
     @Cacheable("books")
-    public Iterable<Book> getAllBooks() {
-        if (bookRepository.findAll().isEmpty()) {
+    public Page<Book> getAllBooks(Pageable pageable) {
+        if (bookRepository.count() == 0) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No books found");
         } else {
-            return bookRepository.findAll();
+            return bookRepository.findAll(pageable);
         }
     }
 
