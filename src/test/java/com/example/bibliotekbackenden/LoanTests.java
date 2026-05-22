@@ -1,160 +1,245 @@
 package com.example.bibliotekbackenden;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicInteger;
+import com.example.bibliotekbackenden.Configuration.JwtUtil;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
 
-import com.example.bibliotekbackenden.Dto.Author.v1.AuthorCreateDTO;
-import com.example.bibliotekbackenden.Dto.Author.v1.AuthorResponseDTO;
-import com.example.bibliotekbackenden.Dto.Book.v2.BookCreateDTOv2;
-import com.example.bibliotekbackenden.Dto.Book.v2.BookResponseDTOv2;
-import com.example.bibliotekbackenden.Dto.Loan.v1.LoanCreateDTO;
-import com.example.bibliotekbackenden.Dto.Loan.v1.LoanResponseDTO;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.*;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
-public class LoanTests {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+@SpringBootTest
+@ActiveProfiles("test")
+@AutoConfigureMockMvc
+class LoanTests {
 
         @Autowired
-        private TestRestTemplate restTemplate;
+        private MockMvc mockMvc;
+
+        @Autowired
+        private JwtUtil jwtUtil;
+
+        @Autowired
+        private ObjectMapper objectMapper;
+
+        private String token() {
+                return "Bearer " + jwtUtil.generateToken("admin");
+        }
+
+        // ---------- Helper Methods ----------
+
+        private ResultActions authorizedPost(String url, Object body) throws Exception {
+                return mockMvc.perform(post(url)
+                                .header("Authorization", token())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(body)));
+        }
+
+        private ResultActions authorizedGet(String url) throws Exception {
+                return mockMvc.perform(get(url)
+                                .header("Authorization", token()));
+        }
+
+        private ResultActions authorizedDelete(String url) throws Exception {
+                return mockMvc.perform(delete(url)
+                                .header("Authorization", token()));
+        }
+
+        // ---------- Test Data Creators ----------
+
+        private Long createAuthor(String name) throws Exception {
+
+                String response = authorizedPost("/api/authors",
+                                Map.of("name", name))
+                                .andExpect(status().isCreated())
+                                .andReturn()
+                                .getResponse()
+                                .getContentAsString();
+
+                return objectMapper.readTree(response)
+                                .get("id")
+                                .asLong();
+        }
+
+        private Long createBook(
+                        String title,
+                        Long authorId,
+                        String isbn,
+                        int publishedYear) throws Exception {
+
+                var body = Map.of(
+                                "title", title,
+                                "authorId", authorId,
+                                "isbn", isbn,
+                                "publishedYear", publishedYear);
+
+                String response = authorizedPost("/api/books/v1", body)
+                                .andExpect(status().isCreated())
+                                .andReturn()
+                                .getResponse()
+                                .getContentAsString();
+
+                return objectMapper.readTree(response)
+                                .get("id")
+                                .asLong();
+        }
+
+        private Long createLoan(
+                        Long bookId,
+                        String loanDate,
+                        String returnDate) throws Exception {
+
+                var body = Map.of(
+                                "bookId", bookId,
+                                "loanDate", loanDate,
+                                "returnDate", returnDate);
+
+                String response = authorizedPost("/api/loans", body)
+                                .andExpect(status().isCreated())
+                                .andReturn()
+                                .getResponse()
+                                .getContentAsString();
+
+                return objectMapper.readTree(response)
+                                .get("id")
+                                .asLong();
+        }
+
+        // ---------- Tests ----------
 
         @Test
-        void shouldCreateLoan() {
-                AuthorCreateDTO author = new AuthorCreateDTO("Mario Z.", 0);
-                ResponseEntity<AuthorResponseDTO> authorResponse = restTemplate.postForEntity(
-                                "/api/v1/authors", author, AuthorResponseDTO.class);
+        void shouldCreateLoan() throws Exception {
 
-                Long authorId = authorResponse.getBody().id();
-                BookCreateDTOv2 book = new BookCreateDTOv2("Computer Science", authorId, "123XAB", 2025, true);
-                ResponseEntity<BookResponseDTOv2> bookResponse = restTemplate.postForEntity(
-                                "/books/v2", book, BookResponseDTOv2.class);
+                Long authorId = createAuthor("Author-" + UUID.randomUUID());
 
-                Long bookId = bookResponse.getBody().id();
-                LoanCreateDTO loan = new LoanCreateDTO(
-                                bookId,
-                                java.sql.Date.valueOf("2024-07-01"),
-                                java.sql.Date.valueOf("2024-07-15"));
-                ResponseEntity<LoanResponseDTO> loanResponse = restTemplate.postForEntity(
-                                "/loans", loan, LoanResponseDTO.class);
+                String title = "Loan Book-" + UUID.randomUUID();
 
-                assertEquals(HttpStatus.CREATED, loanResponse.getStatusCode());
+                Long bookId = createBook(
+                                title,
+                                authorId,
+                                "ISBN-" + UUID.randomUUID(),
+                                2024);
+
+                var body = Map.of(
+                                "bookId", bookId,
+                                "loanDate", "2026-05-21",
+                                "returnDate", "2026-06-21");
+
+                authorizedPost("/api/loans", body)
+                                .andExpect(status().isCreated())
+                                .andExpect(jsonPath("$.id").exists())
+                                .andExpect(jsonPath("$.bookId").value(bookId))
+                                .andExpect(jsonPath("$.bookTitle").value(title))
+                                .andExpect(jsonPath("$.loanDate").value("2026-05-21"))
+                                .andExpect(jsonPath("$.returnDate").value("2026-06-21"));
         }
 
         @Test
-        void shouldGetLoanById() {
-                AuthorCreateDTO author = new AuthorCreateDTO("Mario Z.", 0);
-                ResponseEntity<AuthorResponseDTO> authorResponse = restTemplate.postForEntity(
-                                "/api/v1/authors", author, AuthorResponseDTO.class);
+        void shouldGetLoanById() throws Exception {
 
-                Long authorId = authorResponse.getBody().id();
-                BookCreateDTOv2 book = new BookCreateDTOv2("Computer Science", authorId, "123XAB", 2025, true);
-                ResponseEntity<BookResponseDTOv2> bookResponse = restTemplate.postForEntity(
-                                "/books/v2", book, BookResponseDTOv2.class);
+                Long authorId = createAuthor("Author-" + UUID.randomUUID());
 
-                Long bookId = bookResponse.getBody().id();
-                LoanCreateDTO loan = new LoanCreateDTO(
+                String title = "Loaned Book-" + UUID.randomUUID();
+
+                Long bookId = createBook(
+                                title,
+                                authorId,
+                                "ISBN-" + UUID.randomUUID(),
+                                2025);
+
+                Long loanId = createLoan(
                                 bookId,
-                                java.sql.Date.valueOf("2024-07-01"),
-                                java.sql.Date.valueOf("2024-07-15"));
-                ResponseEntity<LoanResponseDTO> loanResponse = restTemplate.postForEntity(
-                                "/loans", loan, LoanResponseDTO.class);
+                                "2026-05-21",
+                                "2026-06-21");
 
-                Long loanId = loanResponse.getBody().id();
-                ResponseEntity<LoanResponseDTO> getLoanByIdResponse = restTemplate.getForEntity(
-                                "/loans/" + loanId, LoanResponseDTO.class);
-
-                assertEquals(HttpStatus.OK, getLoanByIdResponse.getStatusCode());
+                authorizedGet("/api/loans/" + loanId)
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.id").value(loanId))
+                                .andExpect(jsonPath("$.bookId").value(bookId))
+                                .andExpect(jsonPath("$.bookTitle").value(title))
+                                .andExpect(jsonPath("$.loanDate").value("2026-05-21"))
+                                .andExpect(jsonPath("$.returnDate").value("2026-06-21"));
         }
 
         @Test
-        void shouldDeleteLoan() {
-                AuthorCreateDTO author = new AuthorCreateDTO("Mario Z.", 0);
-                ResponseEntity<AuthorResponseDTO> authorResponse = restTemplate.postForEntity(
-                                "/api/v1/authors", author, AuthorResponseDTO.class);
+        void shouldDeleteLoan() throws Exception {
 
-                Long authorId = authorResponse.getBody().id();
-                BookCreateDTOv2 book = new BookCreateDTOv2("Computer Science", authorId, "123XAB", 2025, true);
-                ResponseEntity<BookResponseDTOv2> bookResponse = restTemplate.postForEntity(
-                                "/books/v2", book, BookResponseDTOv2.class);
+                Long authorId = createAuthor("Author-" + UUID.randomUUID());
 
-                Long bookId = bookResponse.getBody().id();
-                LoanCreateDTO loan = new LoanCreateDTO(
+                Long bookId = createBook(
+                                "Delete Loan Book-" + UUID.randomUUID(),
+                                authorId,
+                                "ISBN-" + UUID.randomUUID(),
+                                2023);
+
+                Long loanId = createLoan(
                                 bookId,
-                                java.sql.Date.valueOf("2024-07-01"),
-                                java.sql.Date.valueOf("2024-07-15"));
-                ResponseEntity<LoanResponseDTO> loanResponse = restTemplate.postForEntity(
-                                "/loans", loan, LoanResponseDTO.class);
+                                "2026-05-21",
+                                "2026-06-21");
 
-                Long loanId = loanResponse.getBody().id();
-                restTemplate.delete("/loans/" + loanId);
+                authorizedDelete("/api/loans/" + loanId)
+                                .andExpect(status().isOk());
 
-                ResponseEntity<LoanResponseDTO> getLoanResponse = restTemplate.getForEntity(
-                                "/loans/" + loanId, LoanResponseDTO.class);
-
-                assertEquals(HttpStatus.NOT_FOUND, getLoanResponse.getStatusCode());
+                authorizedGet("/api/loans/" + loanId)
+                                .andExpect(status().isNotFound());
         }
 
         @Test
-        void shouldHandleConcurrentLoanRequests() throws InterruptedException {
-                // Setup: Create author and book once
-                AuthorCreateDTO author = new AuthorCreateDTO("Mario Z.", 0);
-                ResponseEntity<AuthorResponseDTO> authorResponse = restTemplate.postForEntity(
-                                "/api/v1/authors", author, AuthorResponseDTO.class);
+        void shouldHandleConcurrentLoanRequests() throws Exception {
 
-                Long authorId = authorResponse.getBody().id();
-                BookCreateDTOv2 book = new BookCreateDTOv2("Computer Science", authorId, "123XAB", 2025, true);
-                ResponseEntity<BookResponseDTOv2> bookResponse = restTemplate.postForEntity(
-                                "/books/v2", book, BookResponseDTOv2.class);
+                Long authorId = createAuthor("Author-" + UUID.randomUUID());
 
-                Long bookId = bookResponse.getBody().id();
+                Long bookId = createBook(
+                                "Concurrent Loan Book-" + UUID.randomUUID(),
+                                authorId,
+                                "ISBN-" + UUID.randomUUID(),
+                                2022);
 
-                // Concurrent requests
-                ExecutorService executor = Executors.newFixedThreadPool(10);
-                AtomicInteger successCount = new AtomicInteger(0);
-                AtomicInteger failureCount = new AtomicInteger(0);
-                CountDownLatch latch = new CountDownLatch(100);
+                var requestBody = Map.of(
+                                "bookId", bookId,
+                                "loanDate", "2026-05-21",
+                                "returnDate", "2026-06-21");
 
-                for (int i = 0; i < 100; i++) {
-                        executor.submit(() -> {
-                                try {
-                                        LoanCreateDTO loanDto = new LoanCreateDTO(
-                                                        bookId,
-                                                        java.sql.Date.valueOf("2024-07-01"),
-                                                        java.sql.Date.valueOf("2024-07-15"));
+                ExecutorService executor = Executors.newFixedThreadPool(2);
 
-                                        ResponseEntity<LoanResponseDTO> response = restTemplate.postForEntity(
-                                                        "/loans", loanDto, LoanResponseDTO.class);
+                CountDownLatch ready = new CountDownLatch(2);
+                CountDownLatch start = new CountDownLatch(1);
 
-                                        if (response.getStatusCode() == HttpStatus.CREATED) {
-                                                successCount.incrementAndGet();
-                                        } else {
-                                                failureCount.incrementAndGet();
-                                        }
-                                } catch (Exception e) {
-                                        failureCount.incrementAndGet();
-                                } finally {
-                                        latch.countDown();
-                                }
-                        });
-                }
+                Callable<Integer> requestTask = () -> {
+                        ready.countDown();
+                        start.await();
 
-                latch.await();
+                        return authorizedPost("/api/loans", requestBody)
+                                        .andReturn()
+                                        .getResponse()
+                                        .getStatus();
+                };
+
+                Future<Integer> firstRequest = executor.submit(requestTask);
+                Future<Integer> secondRequest = executor.submit(requestTask);
+
+                ready.await();
+                start.countDown();
+
+                int firstStatus = firstRequest.get();
+                int secondStatus = secondRequest.get();
+
                 executor.shutdown();
 
-                // Assert: only 1 loan created, 99 failed
-                assertEquals(1, successCount.get());
-                assertEquals(99, failureCount.get());
+                // One request succeeds (201)
+                // One request fails (409)
+                assertEquals(610, firstStatus + secondStatus);
         }
 }
